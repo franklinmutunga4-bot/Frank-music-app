@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#14061f">
+<title>Now Playing v2.0</title>
+<script>
+window.onerror=function(m,s,l){
+  var d=document.getElementById('err');
+  if(!d){d=document.createElement('div');d.id='err';
+    d.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99;background:#b00020;color:#fff;font:12px monospace;padding:8px;white-space:pre-wrap';
+    (document.body||document.documentElement).appendChild(d);}
+  d.textContent+=m+' (line '+l+')\n';
+};
+</script>
+<link rel="stylesheet" href="style.css" onerror="window.onerror('style.css was not found. Keep index.html, style.css and app.js in the same folder.',0,0)">
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="veil"></div>
+
+<div class="app on-now" id="app">
+ <div class="views">
+
+  <section class="view show" id="v-now">
+   <header class="glass">
+    <button type="button" class="hbtn press" id="qBtn" aria-label="Queue"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Queue</button>
+    <div class="htitle"><b>Now Playing</b><span id="queueName">Demo queue · 4 songs</span></div>
+    <div class="hr">
+     <label class="hbtn press" for="files">Add</label>
+     <button type="button" class="hbtn press gbtn" data-gear="1" aria-label="Settings"></button>
+    </div>
+    <input type="file" id="files" accept="audio/*" multiple>
+    <input type="file" id="dirf" webkitdirectory multiple>
+   </header>
+   <div class="stage" id="stage">
+    <div id="artwrap"><div class="art" id="art"><div class="orb"></div><div class="art-label" id="artLabel"></div></div></div>
+    <div id="lyr" class="lyx plain al-l"></div>
+   </div>
+   <div class="panel glass">
+    <div class="meta">
+     <div><h1 id="title"></h1><p id="artist"></p></div>
+     <button type="button" class="circ press dis qico" id="lbtn" aria-label="Lyrics"></button>
+     <button type="button" class="circ press" id="heart" aria-label="Favourite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.6-9-9.4C2 7.8 4 5 7 5c1.9 0 3.5 1 5 3 1.5-2 3.1-3 5-3 3 0 5 2.8 4 6.1-1.5 4.8-9 9.4-9 9.4z"/></svg></button>
+    </div>
+    <div class="seek" id="seek"><div class="track"><div class="fill" id="fill"></div><div class="hit"></div></div></div>
+    <div class="times"><span id="cur">0:00</span><button type="button" class="fmt press" id="fmtb" aria-label="Audio format"></button><span id="rem">-0:00</span></div>
+    <div class="controls">
+     <button type="button" class="mini press" id="shuf" aria-label="Shuffle"><svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
+     <button type="button" class="cbtn press" id="prev" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9.5 12z"/></svg></button>
+     <button type="button" class="cbtn big press" id="play" aria-label="Play or pause"><svg class="pl" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><svg class="pa" viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></button>
+     <button type="button" class="cbtn press" id="next" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5l10.5 7L4 19z"/></svg></button>
+     <button type="button" class="mini press" id="rep" aria-label="Repeat"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3"/></svg></button>
+    </div>
+    <div class="vol">
+     <svg class="vi" viewBox="0 0 24 24"><path class="sp" d="M4 9.5v5h3.5l4.5 3.5V6L7.5 9.5H4z"/></svg>
+     <div class="vs" id="vs"><div class="vt"><div class="vf" id="vf"></div></div></div>
+     <svg class="vi" viewBox="0 0 24 24"><path class="sp" d="M3 9.5v5h3.5L11 18V6L6.5 9.5H3z"/><path class="w" d="M14.5 9a4.2 4.2 0 010 6M17.5 6.2a8 8 0 010 11.6"/></svg>
+    </div>
+   </div>
+  </section>
+
+  <section class="view" id="v-browse"><div class="page">
+   <div class="lh"><h2 class="big">Browse</h2><div class="hr"><button type="button" class="hbtn press gbtn" data-gear="1" aria-label="Settings"></button></div></div>
+   <p class="empty">Nothing here yet.</p>
+  </div></section>
+
+  <section class="view" id="v-radio"><div class="page">
+   <div class="lh"><h2 class="big">Radio</h2><div class="hr"><button type="button" class="hbtn press gbtn" data-gear="1" aria-label="Settings"></button></div></div>
+   <p class="sub">Stations shuffle through your own songs</p>
+   <div id="stations"></div>
+  </div></section>
+
+  <section class="view" id="v-lib"><div class="page" id="libPage">
+   <div class="lh"><h2 class="big" id="libT">Library</h2><div class="hr"><label class="hbtn press" for="files">Add songs</label><button type="button" class="hbtn press gbtn" data-gear="1" aria-label="Settings"></button></div></div>
+   <div class="seg glass" id="seg"><button type="button" class="on" data-s="songs">Songs</button><button type="button" data-s="artists">Artists</button><button type="button" data-s="pl">Playlists</button><button type="button" data-s="fav">Favourites</button></div>
+   <div id="libBody"></div>
+  </div></section>
+
+  <section class="view" id="v-search"><div class="page">
+   <div class="lh"><h2 class="big">Search</h2><div class="hr"><button type="button" class="hbtn press gbtn" data-gear="1" aria-label="Settings"></button></div></div>
+   <input class="sbox glass" id="q" type="search" placeholder="Songs, artists" autocomplete="off">
+   <ul class="rows box glass" id="sList"></ul>
+  </div></section>
+
+  <section class="view" id="v-settings"><div class="page">
+   <div class="lh"><h2 class="big">Settings</h2><div class="hr"><button type="button" class="hbtn press" id="setDone">Done</button></div></div>
+   <button type="button" class="srow glass press" data-go="theme"><div class="badge" style="background:linear-gradient(145deg,#ff2d6f,#7a2cff)"><svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="3.5"/><circle cx="16" cy="9" r="3.5" opacity=".75"/><circle cx="12" cy="15.5" r="3.5" opacity=".55"/></svg></div><div class="st"><b>Theme</b><span id="thSub"></span></div><svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+   <button type="button" class="srow glass press" data-go="eq"><div class="badge" style="background:linear-gradient(145deg,#2aa8ff,#7a2cff)"><svg viewBox="0 0 24 24" style="fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg></div><div class="st"><b>Equalizer</b><span id="eqSub"></span></div><svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+   <button type="button" class="srow glass press" data-go="sound"><div class="badge" style="background:linear-gradient(145deg,#34c759,#2aa8ff)"><svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5l4.5 3.5V6L7.5 9.5H4z"/><path d="M15 9a4 4 0 010 6M17.5 6.5a8 8 0 010 11" style="fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round"/></svg></div><div class="st"><b>Sound</b><span id="sndSub"></span></div><svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+   <button type="button" class="srow glass press" data-go="lyrics"><div class="badge qico" style="background:linear-gradient(145deg,#ff5a3c,#ff2d6f)"></div><div class="st"><b>Lyrics</b><span id="lySub"></span></div><svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div></section>
+
+  <section class="view" id="v-theme"><div class="page">
+   <div class="sph"><button type="button" class="hbtn press" data-go="settings">‹ Settings</button></div>
+   <h2 class="big">Theme</h2>
+   <button type="button" class="srow glass press" data-go="moods"><div class="badge" style="background:linear-gradient(145deg,#ff5a3c,#ffa03c)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg></div><div class="st"><b>Moods</b><span id="moodSub"></span></div><svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div></section>
+
+  <section class="view" id="v-moods"><div class="page">
+   <div class="sph"><button type="button" class="hbtn press" data-go="theme">‹ Theme</button></div>
+   <h2 class="big">Moods</h2>
+   <p class="sub">Pick a colour mood for the background</p>
+   <div class="tiles" id="tiles"></div>
+  </div></section>
+
+  <section class="view" id="v-sound"><div class="page">
+   <div class="sph"><button type="button" class="hbtn press" data-go="settings">‹ Settings</button></div>
+   <h2 class="big">Sound</h2>
+   <p class="sub">Volume boost</p>
+   <div class="sbx glass">
+    <div class="sbr"><span>Boost</span><b id="bstV">Off</b></div>
+    <div class="vs bst" id="bst"><div class="vt"><div class="vf" id="bstf"></div></div></div>
+    <div class="sbt"><span>Off</span><span>+6 dB</span><span>+12 dB</span></div>
+   </div>
+   <p class="sub">Makes quiet songs louder, like a volume booster. A limiter catches the peaks so loud parts do not crackle.</p>
+   <div class="srow glass" style="cursor:default"><div class="st"><b>Loud mode</b><span>Evens out the song and lifts the quiet parts</span></div><div class="sw" id="loudSw" role="switch" aria-label="Loud mode"><i></i></div></div>
+   <div class="srow glass" style="cursor:default"><div class="st"><b>Equalizer headroom</b><span>On lowers the volume a little when you boost bands. Off keeps songs loud.</span></div><div class="sw" id="protSw" role="switch" aria-label="Equalizer headroom"><i></i></div></div>
+   <p class="sub" id="sndNote"></p>
+  </div></section>
+
+  <section class="view" id="v-lyrics"><div class="page">
+   <div class="sph"><button type="button" class="hbtn press" data-go="settings">‹ Settings</button></div>
+   <h2 class="big">Lyrics</h2>
+   <p class="sub">Alignment</p>
+   <div class="seg glass" id="alSeg"><button type="button" data-al="l">Left</button><button type="button" data-al="c">Middle</button><button type="button" data-al="r">Right</button></div>
+   <p class="sub">Preview</p>
+   <div class="lypv glass"><div class="lyx sync al-l" id="lypv"><div class="ln d1">Glass hearts glowing in the foam</div><div class="ln on">Neon tides are pulling me home</div><div class="ln d1">Hold the night a little while</div></div></div>
+  </div></section>
+
+  <section class="view" id="v-eq"><div class="page">
+   <div class="sph"><button type="button" class="hbtn press" data-go="settings">‹ Settings</button></div>
+   <div class="lh"><h2 class="big">Equalizer</h2><div class="sw" id="eqSw" role="switch" aria-label="Equalizer on or off"><i></i></div></div>
+   <div class="eqcard glass"><canvas id="eqc"></canvas><div class="eqst" id="eqst"></div></div>
+   <div class="bands glass" id="bands"></div>
+   <p class="sub">Presets</p>
+   <div class="chips" id="chips"></div>
+   <div style="padding:4px 2px"><button type="button" class="hbtn press" id="eqReset">Reset to flat</button></div>
+   <p class="sub" id="eqNote" style="padding-top:10px"></p>
+  </div></section>
+ </div>
+
+ <div class="mp glass" id="mp">
+  <div class="thumb" id="mpThumb"></div>
+  <div class="tx"><b id="mpT"></b><span class="a" id="mpA"></span></div>
+  <button type="button" class="mpb press" id="mpPlay" aria-label="Play or pause"><svg class="pl" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><svg class="pa" viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></button>
+  <button type="button" class="mpb press" id="mpNext" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5l10.5 7L4 19z"/></svg></button>
+ </div>
+
+ <nav class="glass" id="nav">
+  <button type="button" class="tab press active" data-v="now"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z" fill="currentColor"/></svg>Listen Now</button>
+  <button type="button" class="tab press" data-v="browse"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>Browse</button>
+  <button type="button" class="tab press" data-v="radio"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M8.2 8.2a5.4 5.4 0 000 7.6M15.8 8.2a5.4 5.4 0 010 7.6M5.3 5.3a9.5 9.5 0 000 13.4M18.7 5.3a9.5 9.5 0 010 13.4"/></svg>Radio</button>
+  <button type="button" class="tab press" data-v="lib"><svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>Library</button>
+  <button type="button" class="tab press" data-v="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>Search</button>
+ </nav>
+</div>
+
+<div class="sheet" id="sheet"><div class="scrim" id="scrim"></div>
+ <div class="scard glass"><div class="grab"></div>
+  <div class="sh"><h2>Up Next</h2><button type="button" class="hbtn press" id="clearQ">Clear</button></div>
+  <ul class="rows" id="qlist"></ul></div></div>
+<div class="dlg" id="dlg"><div class="dscrim" id="dscrim"></div><div class="dcard glass" id="dcard"></div></div>
+<div class="toast glass" id="toast"></div>
+
+<script src="app.js" onerror="window.onerror('app.js was not found. Keep index.html, style.css and app.js in the same folder.',0,0)"></script>
+</body>
+</html>
