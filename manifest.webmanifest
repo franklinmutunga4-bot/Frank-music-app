@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "Frank Music",
+  "short_name": "Frank Music",
+  "description": "A personal music player with playlists, equalizer and animated visuals.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#14061f",
+  "theme_color": "#14061f",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
