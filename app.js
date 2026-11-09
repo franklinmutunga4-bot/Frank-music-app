@@ -329,11 +329,12 @@ function show(){
   }
   refresh();
 }
+var curEl=$('cur'),remEl=$('rem'),pW='',pC='',pR='';
 function paint(){
-  var d=dur();
-  fill.style.width=(d?Math.min(100,pos/d*100):0)+'%';
-  $('cur').textContent=fmt(pos);
-  $('rem').textContent=d?'-'+fmt(d-pos):'-0:00';
+  var d=dur(),w=(d?Math.min(100,pos/d*100):0).toFixed(1)+'%',c=fmt(pos),r=d?'-'+fmt(d-pos):'-0:00';
+  if(w!==pW){fill.style.width=w;pW=w;}
+  if(c!==pC){curEl.textContent=c;pC=c;}
+  if(r!==pR){remEl.textContent=r;pR=r;}
   if(lyrOn)updLyr();
 }
 function load(i){
@@ -365,6 +366,7 @@ function setPlaying(p){
 function playIndex(i,c){
   plc=c||null;
   hist.push(idx);
+  if(hist.length>50)hist.shift();
   playing=true;
   load(i);
   setPlaying(true);
@@ -648,7 +650,7 @@ function removeTrack(i){
   if(!k)return;
   var wasCur=(i===idx),wp=playing&&wasCur;
   if(wasCur){playing=false;audio.pause();}
-  try{if(k.src)URL.revokeObjectURL(k.src);}catch(e){}
+  try{if(k.src)URL.revokeObjectURL(k.src);if(k.cover)URL.revokeObjectURL(k.cover);}catch(e){}
   tracks.splice(i,1);
   function fix(x){return x>i?x-1:x;}
   upq=upq.filter(function(x){return x!==i;}).map(fix);
@@ -1079,9 +1081,16 @@ function audioApply(){
   if(comp){comp.threshold.value=snd.loud?-30:0;comp.ratio.value=snd.loud?4:1;}
   if(mk)sp(mk.gain,snd.loud?Math.pow(10,5/20):1);
   if(lim){lim.threshold.value=on?-1:0;lim.ratio.value=on?20:1;}
+  savePrefs();
+}
+var prefT=0;
+function flushPrefs(){
+  clearTimeout(prefT);prefT=0;
   keep('np_eq',JSON.stringify(eq));
   keep('np_snd',JSON.stringify({boost:snd.boost,loud:snd.loud,prot:snd.prot}));
 }
+function savePrefs(){clearTimeout(prefT);prefT=setTimeout(flushPrefs,400);}
+window.addEventListener('pagehide',function(){if(prefT)flushPrefs();});
 /* the engine starts on every play so the bars can follow the music */
 function audioStart(){
   if(!eqInit())return false;
@@ -1123,6 +1132,7 @@ function bandSet(el,e){
   audioApply();
   eqUi();
 }
+var EQN=96,EQFR=null,EQM=null,EQP=null,EQT=null;
 function eqDraw(){
   var c=$('eqc'),w=c.clientWidth,h=c.clientHeight;
   if(!w||!h)return;
@@ -1151,18 +1161,21 @@ function eqDraw(){
       x.fillRect(bx+1,h-bh,Math.max(2,xp(f1,w)-bx-2),bh);
     }
   }
-  var EQT=[],EQFR=[],k;
-  for(k=0;k<96;k++){EQFR.push(20*Math.pow(1000,k/95));EQT.push(1);}
+  var k;
+  if(!EQFR){
+    EQFR=new Float32Array(EQN);EQM=new Float32Array(EQN);EQP=new Float32Array(EQN);EQT=new Float32Array(EQN);
+    for(k=0;k<EQN;k++)EQFR[k]=20*Math.pow(1000,k/(EQN-1));
+  }
+  for(k=0;k<EQN;k++)EQT[k]=1;
   if(dfilt.length){
-    var M=new Float32Array(96),P=new Float32Array(96),FR=new Float32Array(EQFR);
     for(j=0;j<10;j++){
-      dfilt[j].getFrequencyResponse(FR,M,P);
-      for(i=0;i<96;i++)EQT[i]*=M[i];
+      dfilt[j].getFrequencyResponse(EQFR,EQM,EQP);
+      for(i=0;i<EQN;i++)EQT[i]*=EQM[i];
     }
   }
   x.globalAlpha=eq.on?1:.4;
   x.beginPath();
-  for(i=0;i<96;i++){
+  for(i=0;i<EQN;i++){
     var db2=Math.max(-15,Math.min(15,20*Math.log(EQT[i])/Math.LN10)),px=xp(EQFR[i],w),py=mid-db2*sc;
     if(i)x.lineTo(px,py);else x.moveTo(px,py);
   }
@@ -1201,8 +1214,9 @@ function bstTo(e){
 /* =====================================================================
    BARS (follow the music; slow drain when paused)
    ===================================================================== */
-var barTgt=[.3,.3,.3,.3],barNext=[0,0,0,0];
+var barTgt=[.3,.3,.3,.3],barNext=[0,0,0,0],barsIdle=false;
 function barsStep(now){
+  if(barsIdle&&!playing)return;
   var els=document.querySelectorAll('li.cur .eqb'),b,k,bars,vis=false,target;
   if(!els.length)return;
   for(b=0;b<4;b++){
@@ -1215,6 +1229,7 @@ function barsStep(now){
     barsV[b]+=(target-barsV[b])*(target>barsV[b]?.35:.06);
     if(barsV[b]>.03)vis=true;
   }
+  barsIdle=(!playing&&!vis);
   for(k=0;k<els.length;k++){
     els[k].classList.toggle('on',vis);
     bars=els[k].getElementsByTagName('i');
@@ -1266,7 +1281,7 @@ function bgStep(dt){
 /* =====================================================================
    ONE RENDER LOOP: progress, lyrics, bars, equalizer, background
    ===================================================================== */
-var lastFrame=0;
+var lastFrame=0,bgAcc=0;
 function frame(now){
   requestAnimationFrame(frame);
   var dt=lastFrame?Math.min(.05,(now-lastFrame)/1000):0;
@@ -1279,7 +1294,13 @@ function frame(now){
   }
   barsStep(now);
   if(eqRun)eqDraw();
-  if(blurOn)bgStep(dt);
+  /* skip the liquid background when it cannot be seen (White mode) or while the cover flies:
+     every repaint sits behind blurred glass, which is the main GPU cost. It moves slowly,
+     so drawing it about 30 times a second looks the same and halves the work */
+  if(blurOn&&look!=='white'&&!expanding&&!collapsing){
+    bgAcc+=dt;
+    if(bgAcc>=.033){bgStep(bgAcc);bgAcc=0;}
+  }
 }
 
 /* =====================================================================
@@ -1376,55 +1397,189 @@ function rowHit(e,c,after){
 var expanding=false;
 function expandMini(){
   if(expanding)return;
-  var thumb=$('mpThumb'),from=thumb.getBoundingClientRect(),cs=getComputedStyle(thumb);
+  var k=tracks[idx],thumb=$('mpThumb'),from=thumb.getBoundingClientRect();
   var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   go('now');
-  var art=$('art'),wrap=$('artwrap'),to=wrap.getBoundingClientRect();
+  var wrap=$('artwrap'),art=$('art'),to=wrap.getBoundingClientRect();
   if(reduce||!from.width||!to.width||!wrap.animate)return;
-  var hasCover=!!thumb.style.backgroundImage;
   expanding=true;
-  var D=900,ease='cubic-bezier(.22,.9,.25,1)';
+
+  /* glass panel and playback controls rise into place while the cover is still flying */
+  var ctl=document.querySelector('#v-now .controls');
+  var pnl=document.querySelector('#v-now .panel');
+  var inEase='cubic-bezier(.22,.8,.22,1)';
+  var aIn=[];
+  if(pnl){
+    /* blur is the expensive part of animating glass, so it stays off until the panel has landed */
+    pnl.style.willChange='transform, opacity';
+    pnl.style.setProperty('-webkit-backdrop-filter','none');
+    pnl.style.setProperty('backdrop-filter','none');
+    aIn.push(pnl.animate([
+      {opacity:0,transform:'translateY(40px) scaleX(.9) scaleY(.82)',transformOrigin:'50% 100%'},
+      {opacity:1,transform:'translateY(0) scaleX(1) scaleY(1)',transformOrigin:'50% 100%'}
+    ],{duration:700,delay:200,easing:inEase,fill:'backwards'}));
+  }
+  if(ctl){
+    ctl.style.willChange='transform, opacity';
+    aIn.push(ctl.animate([
+      {opacity:0,transform:'translateY(28px) scale(.97)'},
+      {opacity:1,transform:'translateY(0) scale(1)'}
+    ],{duration:640,delay:280,easing:inEase,fill:'backwards'}));
+  }
+  var inDone=false;
+  function inEnd(){
+    if(inDone)return;
+    inDone=true;
+    if(pnl){
+      pnl.style.willChange='';
+      pnl.style.removeProperty('-webkit-backdrop-filter');
+      pnl.style.removeProperty('backdrop-filter');
+    }
+    if(ctl)ctl.style.willChange='';
+  }
+  if(aIn.length)aIn[aIn.length-1].onfinish=inEnd;
+  setTimeout(inEnd,1100);
+  var D=820,E='cubic-bezier(.32,.72,0,1)';
+  var shadowCss=getComputedStyle(art).boxShadow;
   var g=document.createElement('div');
-  g.className='ghost';
-  g.style.backgroundImage=cs.backgroundImage;
-  g.style.backgroundColor=cs.backgroundColor;
-  g.style.width=to.width+'px';
-  g.style.height=to.height+'px';
-  g.style.left=to.left+'px';
-  g.style.top=to.top+'px';
+  g.style.cssText='position:fixed;left:'+to.left+'px;top:'+to.top+'px;width:'+to.width+'px;height:'+to.height+'px;z-index:15;pointer-events:none;overflow:hidden;border-radius:24px;transform-origin:0 0;will-change:transform;backface-visibility:hidden;box-shadow:'+shadowCss;
+  var fade=null;
+  if(k.cover){
+    /* one real image, filling its box exactly like the big artwork */
+    var im=document.createElement('img');
+    im.src=k.cover;
+    im.draggable=false;
+    im.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:center;display:block';
+    g.appendChild(im);
+  }else{
+    /* no cover: blend from the small gradient into the big one */
+    g.style.backgroundImage=getComputedStyle(thumb).backgroundImage;
+    g.style.backgroundSize='cover';
+    fade=document.createElement('div');
+    fade.style.cssText='position:absolute;left:0;top:0;right:0;bottom:0;opacity:0;background-size:cover;background-position:center';
+    fade.style.backgroundImage=getComputedStyle(art).backgroundImage;
+    g.appendChild(fade);
+  }
   var gl=document.createElement('div');
-  gl.className='ghost-gloss';
+  gl.style.cssText='position:absolute;left:0;top:0;right:0;bottom:0;background:linear-gradient(135deg,rgba(255,255,255,.35),rgba(255,255,255,0) 38%);opacity:0';
   g.appendChild(gl);
   document.body.appendChild(g);
+  art.style.visibility='hidden';
   var tx=from.left-to.left,ty=from.top-to.top,sc=from.width/to.width;
-  /* the flying cover moves and scales into place */
   var mv=g.animate([
     {transform:'translate3d('+tx+'px,'+ty+'px,0) scale('+sc+')'},
     {transform:'translate3d(0,0,0) scale(1)'}
-  ],{duration:D,easing:ease,fill:'forwards'});
-  if(hasCover){
-    /* same picture: keep the big artwork hidden during the move, so only one image is ever visible */
-    art.style.visibility='hidden';
-  }else{
-    /* no cover: cross-fade between the mini and full gradients */
-    g.animate([
-      {opacity:1,offset:0},
-      {opacity:1,offset:.5},
-      {opacity:0,offset:1}
-    ],{duration:D,fill:'forwards'});
-    art.animate([
-      {opacity:0,offset:0},
-      {opacity:0,offset:.4},
-      {opacity:1,offset:1}
-    ],{duration:D});
-  }
-  var done=function(){
-    g.remove();
+  ],{duration:D,easing:E,fill:'forwards'});
+  gl.animate([{opacity:0},{opacity:1}],{duration:D,fill:'forwards'});
+  if(fade)fade.animate([{opacity:0,offset:0},{opacity:0,offset:.35},{opacity:1,offset:1}],{duration:D,fill:'forwards'});
+  var fin=false;
+  function done(){
+    if(fin)return;
+    fin=true;
     art.style.visibility='';
-    expanding=false;
-  };
+    /* remove the flying copy only after the real artwork is showing underneath, so nothing flashes */
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      if(g.parentNode)g.parentNode.removeChild(g);
+      expanding=false;
+    });});
+  }
   mv.onfinish=done;
   mv.oncancel=done;
+  setTimeout(done,D+400);
+}
+/* ===== NOW PLAYING → MINI PLAYER: the expand animation in reverse ===== */
+var collapsing=false;
+function collapseNow(name){
+  if(collapsing||expanding)return;
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var appEl=$('app'),art=$('art'),wrap=$('artwrap'),thumb=$('mpThumb'),mpEl=$('mp');
+  var from=wrap.getBoundingClientRect();
+  if(view!=='now'||name==='now'||reduce||!from.width||!wrap.animate){go(name);return;}
+
+  /* find where the mini player cover will be, without showing it */
+  var cls=appEl.className;
+  appEl.className=cls.replace('on-now','');
+  var to=thumb.getBoundingClientRect();
+  appEl.className=cls;
+  if(!to.width){go(name);return;}
+
+  collapsing=true;
+  var k=tracks[idx];
+  var EO='cubic-bezier(.32,.72,0,1)',EI='cubic-bezier(.5,0,.75,.4)';
+  var shadowCss=getComputedStyle(art).boxShadow;
+
+  /* controls and glass panel drop away */
+  var outs=[];
+  var ctl=document.querySelector('#v-now .controls');
+  var pnl=document.querySelector('#v-now .panel');
+  if(ctl)outs.push(ctl.animate([
+    {opacity:1,transform:'translateY(0) scale(1)'},
+    {opacity:0,transform:'translateY(28px) scale(.97)'}
+  ],{duration:340,easing:EI,fill:'forwards'}));
+  if(pnl)outs.push(pnl.animate([
+    {opacity:1,transform:'translateY(0) scaleX(1) scaleY(1)',transformOrigin:'50% 100%'},
+    {opacity:0,transform:'translateY(40px) scaleX(.9) scaleY(.82)',transformOrigin:'50% 100%'}
+  ],{duration:380,delay:30,easing:EI,fill:'forwards'}));
+
+  /* flying copy of the cover */
+  var g=document.createElement('div');
+  g.style.cssText='position:fixed;left:'+from.left+'px;top:'+from.top+'px;width:'+from.width+'px;height:'+from.height+'px;z-index:15;pointer-events:none;overflow:hidden;border-radius:24px;transform-origin:0 0;will-change:transform;backface-visibility:hidden;box-shadow:'+shadowCss;
+  var fade=null;
+  if(k.cover){
+    var im=document.createElement('img');
+    im.src=k.cover;
+    im.draggable=false;
+    im.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:center;display:block';
+    g.appendChild(im);
+  }else{
+    g.style.backgroundImage=getComputedStyle(thumb).backgroundImage;
+    g.style.backgroundSize='cover';
+    fade=document.createElement('div');
+    fade.style.cssText='position:absolute;left:0;top:0;right:0;bottom:0;opacity:1;background-size:cover;background-position:center';
+    fade.style.backgroundImage=getComputedStyle(art).backgroundImage;
+    g.appendChild(fade);
+  }
+  var gl=document.createElement('div');
+  gl.style.cssText='position:absolute;left:0;top:0;right:0;bottom:0;background:linear-gradient(135deg,rgba(255,255,255,.35),rgba(255,255,255,0) 38%);opacity:1';
+  g.appendChild(gl);
+  document.body.appendChild(g);
+  art.style.visibility='hidden';
+
+  var fin=false;
+  function cleanup(){
+    if(fin)return;
+    fin=true;
+    thumb.style.visibility='';
+    art.style.visibility='';
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      if(g.parentNode)g.parentNode.removeChild(g);
+      collapsing=false;
+    });});
+  }
+
+  /* the cover starts moving right away, a moment after the controls */
+  var tx=to.left-from.left,ty=to.top-from.top,sc=to.width/from.width,D=700,W=90;
+  var mv=g.animate([
+    {transform:'translate3d(0,0,0) scale(1)'},
+    {transform:'translate3d('+tx+'px,'+ty+'px,0) scale('+sc+')'}
+  ],{duration:D,delay:W,easing:EO,fill:'both'});
+  gl.animate([{opacity:1},{opacity:0}],{duration:D,delay:W,fill:'both'});
+  if(fade)fade.animate([{opacity:1,offset:0},{opacity:1,offset:.6},{opacity:0,offset:1}],{duration:D,delay:W,fill:'both'});
+  mv.onfinish=cleanup;
+  mv.oncancel=cleanup;
+  setTimeout(cleanup,D+W+400);
+
+  /* switch the page quietly while the cover is already in flight */
+  setTimeout(function(){
+    go(name);
+    var i;
+    for(i=0;i<outs.length;i++){try{outs[i].cancel();}catch(e){}}
+    if(!fin)thumb.style.visibility='hidden';
+    if(mpEl&&mpEl.animate)mpEl.animate([
+      {opacity:0,transform:'translateY(16px)'},
+      {opacity:1,transform:'translateY(0)'}
+    ],{duration:420,easing:EO,fill:'backwards'});
+  },400);
 }
 /* =====================================================================
    WIRING
@@ -1491,12 +1646,12 @@ app.addEventListener('pointerup',function(e){
 app.addEventListener('pointercancel',function(){tapS=null;});
 
 app.addEventListener('click',function(e){
-  if(up(e.target,'data-gear')){go('settings');return;}
+  if(up(e.target,'data-gear')){collapseNow('settings');return;}
   var t=up(e.target,'data-go');
-  if(t)go(t.getAttribute('data-go'));
+  if(t)collapseNow(t.getAttribute('data-go'));
 });
 on('setDone','click',function(){go(prevView||'now');});
-on('nav','click',function(e){var t=up(e.target,'data-v');if(t)go(t.getAttribute('data-v'));});
+on('nav','click',function(e){var t=up(e.target,'data-v');if(t)collapseNow(t.getAttribute('data-v'));});
 on('qlist','click',function(e){rowHit(e,plc,closeQ);});
 on('sList','click',function(e){rowHit(e,null,function(){go('now');});});
 on('q','input',drawSearch);
