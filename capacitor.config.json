@@ -1,0 +1,11 @@
+{
+  "appId": "com.nowplaying.player",
+  "appName": "Now Playing",
+  "webDir": "www",
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "style": "DARK"
+    }
+  }
+}
