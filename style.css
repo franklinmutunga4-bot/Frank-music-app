@@ -422,3 +422,11 @@ html.look-white .dock .tab.active,html.look-white .dock .tab.active svg{color:#f
 
 /* Listen Now feed: room to scroll the last row above the dock (overrides inline padding) */
 #vNowPage{padding-bottom:210px !important;box-sizing:border-box}
+
+/* FULL SCREEN: use the whole display, no width cap, minimal top padding */
+.app{max-width:none;padding:calc(env(safe-area-inset-top,0px) + 6px) 18px 0}
+
+/* LYRICS MODE: lyrics stop above the controls; with controls hidden they use the full screen */
+.app.lyrmode #v-now .panel{bottom:calc(env(safe-area-inset-bottom,0px) + 16px)}
+.app.lyrmode #lyr{bottom:calc(env(safe-area-inset-bottom,0px) + 350px)}
+.app.lyrmode.chromeoff #lyr{bottom:6px}
