@@ -4,10 +4,12 @@ html,body{height:100%;overflow:hidden;background:#14061f;color:#fff;font-family:
 button,label,input{font-family:inherit;color:inherit}
 input{-webkit-user-select:text;user-select:text}
 ul{list-style:none}
-#bg{position:fixed;top:-80px;left:-80px;width:calc(100% + 160px);height:calc(100% + 160px);-webkit-filter:blur(60px) saturate(1.25);filter:blur(60px) saturate(1.25);z-index:0}
+#bg{position:fixed;top:-15%;left:-15%;width:130%;height:130%;z-index:0;pointer-events:none;transform:translateZ(0);animation:bgDrift 24s ease-in-out infinite alternate;will-change:transform}
+@keyframes bgDrift{0%{transform:scale(1) rotate(0deg) translate3d(0,0,0)}50%{transform:scale(1.12) rotate(6deg) translate3d(-2%,2%,0)}100%{transform:scale(1.05) rotate(-5deg) translate3d(2%,-2%,0)}}
 .veil{position:fixed;top:0;left:0;right:0;bottom:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(10,2,20,.18),rgba(10,2,20,0) 40%,rgba(10,2,20,.38))}
 .app{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top,0px) + 12px) 18px 0;max-width:520px;margin:0 auto}
-.glass{background:var(--glass);-webkit-backdrop-filter:blur(25px);backdrop-filter:blur(25px);border:1px solid var(--edge);box-shadow:0 8px 32px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.12)}
+.glass{background:var(--glass);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--edge);box-shadow:0 8px 32px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.15)}
+.scard,.dcard{-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
 .press{cursor:pointer;transition:transform .1s,background .15s,color .15s}
 .press:active{transform:scale(.95)}
 
@@ -38,7 +40,7 @@ header{display:flex;align-items:center;justify-content:space-between;height:48px
 .playing #artwrap{transform:scale(1)}
 .art{position:relative;width:100%;height:100%;border-radius:24px;overflow:hidden;
   background:radial-gradient(circle at 28% 22%,#ffb3d9 0,transparent 42%),radial-gradient(circle at 78% 30%,#5ad2ff 0,transparent 46%),radial-gradient(circle at 60% 85%,#7b3bff 0,transparent 52%),linear-gradient(145deg,#ff2d6f,#4b1cc8 60%,#0b1a6e);
-  box-shadow:0 30px 60px -12px rgba(255,45,111,.55),0 18px 40px -8px rgba(80,60,255,.5),0 0 0 1px rgba(255,255,255,.12) inset}
+  box-shadow:0 24px 50px -12px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.12) inset}
 .art::after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;border-radius:inherit;background:linear-gradient(135deg,rgba(255,255,255,.35),rgba(255,255,255,0) 38%)}
 .art.cover{background-size:cover;background-position:center}
 .art.cover .orb,.art.cover .art-label{display:none}
@@ -52,17 +54,17 @@ header{display:flex;align-items:center;justify-content:space-between;height:48px
 .art-label small{display:block;font-weight:600;font-size:13px;opacity:.8}
 
 /* lyrics */
-#lyr{display:none;position:absolute;top:6px;left:0;right:0;bottom:6px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:36px 6px 70px;
+#lyr{display:none;position:absolute;top:6px;left:0;right:0;bottom:6px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:36px 6px 70px;contain:content;transform:translateZ(0);
   -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 10%,#000 86%,transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 10%,#000 86%,transparent 100%)}
 .stage.lyr #artwrap{display:none}
 .stage.lyr #lyr{display:block}
 .lyx .pt{font-size:24px;font-weight:800;line-height:1.35;letter-spacing:-.01em;color:rgba(255,255,255,.94);white-space:pre-wrap;word-wrap:break-word}
-.lyx .ln{font-size:28px;font-weight:800;line-height:1.25;letter-spacing:-.01em;padding:9px 4px;color:#fff;cursor:pointer;word-wrap:break-word;
-  transform-origin:0 50%;transform:scale(.86);opacity:.24;-webkit-filter:blur(1.4px);filter:blur(1.4px);
-  transition:transform .6s cubic-bezier(.2,.8,.2,1),opacity .6s ease,filter .6s ease,-webkit-filter .6s ease;will-change:transform,opacity}
-.lyx .ln.d1{opacity:.5;-webkit-filter:blur(.5px);filter:blur(.5px)}
-.lyx .ln.d2{opacity:.36;-webkit-filter:blur(1px);filter:blur(1px)}
-.lyx .ln.on{transform:scale(1);opacity:1;-webkit-filter:none;filter:none;text-shadow:0 0 24px rgba(255,255,255,.3)}
+.lyx .ln{font-size:28px;font-weight:800;line-height:1.25;letter-spacing:-.01em;padding:9px 4px;color:transparent;text-shadow:0 0 7px rgba(255,255,255,.28);cursor:pointer;word-wrap:break-word;
+  transform-origin:0 50%;transform:scale(.86) translateZ(0);
+  transition:transform .55s cubic-bezier(.2,.8,.2,1),color .55s ease,text-shadow .55s ease;will-change:transform}
+.lyx .ln.d1{text-shadow:0 0 3px rgba(255,255,255,.52)}
+.lyx .ln.d2{text-shadow:0 0 5px rgba(255,255,255,.38)}
+.lyx .ln.on{transform:scale(1) translateZ(0);color:#fff;text-shadow:0 0 24px rgba(255,255,255,.35)}
 .lyx.al-c .pt,.lyx.al-c .ln{text-align:center;transform-origin:50% 50%}
 .lyx.al-r .pt,.lyx.al-r .ln{text-align:right;transform-origin:100% 50%}
 .lypv{padding:14px 14px;border-radius:24px;margin-bottom:14px}
@@ -125,7 +127,7 @@ header{display:flex;align-items:center;justify-content:space-between;height:48px
 
 .mp{display:none;align-items:center;height:60px;border-radius:30px;padding:0 8px 0 10px;margin-bottom:8px;flex:none;cursor:pointer}
 .app:not(.on-now) .mp{display:flex}
-.thumb{flex:none;width:42px;height:42px;border-radius:12px;margin-right:12px;background:linear-gradient(145deg,#ff2d6f,#4b1cc8 60%,#0b1a6e);background-size:cover;background-position:center}
+.thumb{flex:none;width:42px;height:42px;border-radius:9.2%;margin-right:12px;background:linear-gradient(145deg,#ff2d6f,#4b1cc8 60%,#0b1a6e);background-size:cover;background-position:center}
 .mp .tx{flex:1;min-width:0}
 .mp b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mp .a{display:block;font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -264,9 +266,13 @@ html.look-white .track,html.look-white .vt{background:rgba(30,20,50,.15)}
 html.look-white .scard{background:rgba(245,246,252,.94)}
 html.look-white .dcard{background:rgba(255,255,255,.96);color:#1a1030}
 html.look-white .toast{color:#1a1030}
-html.look-dark body{background:#07030c}
-html.look-dark .veil{background:rgba(0,0,0,.35)}
-html.look-dark #bg{opacity:.55}
+html.look-dark body{background:#050308}
+html.look-dark .veil{background:rgba(4,2,10,.65)}
+html.look-dark #bg{opacity:.22}
+html.noblur.look-dark body{background:#050308}
+html[data-moods="0"] #bg{display:none}
+html[data-moods="0"] body{background:#0d0914}
+html.look-dark[data-moods="0"] body{background:#050308}
 /* solid panels when blur is off, so text never shows through */
 html.noblur.look-white .panel.glass,html.noblur.look-white header.glass,html.noblur.look-white nav.glass{background:rgba(255,255,255,.96)}
 html.noblur.look-dark .panel.glass,html.noblur.look-dark header.glass,html.noblur.look-dark nav.glass{background:rgba(10,6,18,.95)}
@@ -318,3 +324,101 @@ html.look-white #lbtn.lon svg{stroke:#fff;fill:none}
 /* White mode: no coloured glow under the artwork, and the background canvas is hidden (it is not drawn in White mode) */
 html.look-white #bg{display:none}
 html.look-white .art{box-shadow:0 18px 40px -14px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.06) inset}
+/* Fix pink bleed when blur is on */
+#bg{position:fixed;top:-60px;left:-60px;width:calc(100% + 120px);height:calc(100% + 120px);-webkit-filter:blur(32px);filter:blur(32px);z-index:0}
+
+/* Fix Dark mode pink wash */
+html.look-dark body{background:#050308}
+html.look-dark .veil{background:rgba(4,2,10,.65)}
+html.look-dark #bg{opacity:.22}
+html.noblur.look-dark body{background:#050308}
+
+/* Fix Moods off background color */
+html[data-moods="0"] #bg{display:none}
+html[data-moods="0"] body{background:#0d0914}
+html.look-dark[data-moods="0"] body{background:#050308}
+html.look-white[data-moods="0"] body{background:#eef0f7}
+/* Make header, controls panel, and bottom nav transparent (no glass box) */
+header.glass, .panel.glass, nav.glass {
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+/* Clean floating Apple Music playback icons (no circles) */
+.cbtn, .cbtn.big {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.cbtn svg {
+  width: 60px;
+  height: 60px;
+}
+.cbtn.big svg {
+  width: 60px;
+  height: 60px;
+}
+.controls > * {
+  margin: 0 15px;
+}
+/* Add this rule near your other display/view rules */
+.app.on-now #v-now > header {
+  display: none !important;
+}
+/* Keep the dashboard feed hidden unless explicitly shown, or hide stage when dashboard is active */
+#vNowPage {
+  display: none;
+}
+/* Ensure the Listen Now dashboard container displays properly */
+#vNowPage {
+  display: block;
+}
+
+/* Keep header visible when on-now */
+.app.on-now #v-now > header {
+  display: flex !important;
+}
+/* Listen Now cards */
+.dash-title{font-size:15px;font-weight:700;padding:4px 4px 10px;color:inherit}
+.dash-section{margin-bottom:8px}
+.hscroll{display:flex;gap:14px;overflow-x:auto;padding:0 4px 12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.hscroll::-webkit-scrollbar{display:none}
+.lcard{flex:0 0 150px;scroll-snap-align:start;text-align:left;border:0;background:none;padding:0;min-width:0}
+.lart{position:relative;width:150px;height:150px;border-radius:14px;background-size:cover;background-position:center;box-shadow:0 8px 24px rgba(0,0,0,.3);overflow:hidden}
+.lart.feat{display:flex;align-items:flex-end;padding:12px}
+.lart .fa{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.85}
+.lart .fl{position:relative;font-size:17px;font-weight:800;line-height:1.1;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.35)}
+.lcard b{display:block;font-size:14px;font-weight:600;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:inherit}
+.lcard span{display:block;font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Listen Now: feed + mini bar by default; full player only when opened */
+.app.on-now #vNowPage{display:none}
+.app:not(.on-now) #v-now .stage,.app:not(.on-now) #v-now .panel{display:none}
+
+/* Tab bar: full-width rectangle edge to edge, no pill */
+nav,.app.lyrmode nav{position:relative;left:auto;right:auto;bottom:auto;margin:0 -18px 0;border-radius:0;height:auto;padding:6px 6px calc(env(safe-area-inset-bottom,0px) + 6px);border-left:0;border-right:0}
+.app.chromeoff nav{transform:translateY(64px) scale(1)}
+
+/* One frosted-glass dock: mini player + tab bar, edge to edge */
+.dock{position:absolute;left:0;right:0;bottom:0;z-index:20;
+  background:rgba(22,8,38,.32);
+  -webkit-backdrop-filter:blur(24px) saturate(1.5);backdrop-filter:blur(24px) saturate(1.5);
+  border-top:1px solid rgba(255,255,255,.12);
+  padding:6px 0 calc(env(safe-area-inset-bottom,0px) + 4px)}
+.dock .mp{display:none;background:none;border:0;box-shadow:none;border-radius:0;height:auto;margin:0;padding:8px 18px;-webkit-backdrop-filter:none;backdrop-filter:none}
+.app:not(.on-now) .dock .mp{display:flex}
+.dock nav,.app.lyrmode .dock nav{position:relative;left:auto;right:auto;bottom:auto;margin:0;height:auto;border-radius:0;background:none;border:0;box-shadow:none;padding:4px 6px 2px;-webkit-backdrop-filter:none;backdrop-filter:none}
+.dock .tab.active{background:none}
+.dock .tab.active svg,.dock .tab.active{color:#ff2d6f}
+.page{padding-bottom:170px;box-sizing:border-box}
+.app.on-now #v-now{padding-bottom:150px;box-sizing:border-box}
+html.look-white .dock{background:rgba(255,255,255,.5);border-top-color:rgba(0,0,0,.08)}
+html.look-white .dock .tab.active,html.look-white .dock .tab.active svg{color:#ff2d6f}
+
+/* Lyrics mode: no bottom dock */
+.app.lyrmode .dock{display:none}
+
+/* Listen Now feed: room to scroll the last row above the dock (overrides inline padding) */
+#vNowPage{padding-bottom:210px !important;box-sizing:border-box}

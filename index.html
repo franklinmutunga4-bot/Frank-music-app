@@ -20,10 +20,10 @@ window.onerror=function(m,s,l){
 <canvas id="bg"></canvas>
 <div class="veil"></div>
 
-<div class="app on-now" id="app">
+<div class="app" id="app">
  <div class="views">
 
-  <section class="view show" id="v-now">
+   <section class="view show" id="v-now">
    <header class="glass">
     <button type="button" class="hbtn press" id="qBtn" aria-label="Queue"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Queue</button>
     <div class="htitle"><b>Now Playing</b><span id="queueName">Demo queue · 4 songs</span></div>
@@ -34,10 +34,17 @@ window.onerror=function(m,s,l){
     <input type="file" id="files" accept="audio/*" multiple>
     <input type="file" id="dirf" webkitdirectory multiple>
    </header>
+
+   <!-- Dashboard Feed Container -->
+   <div class="page" id="vNowPage" style="padding: 12px 0;">
+     <div id="v-now-content"></div>
+   </div>
+
    <div class="stage" id="stage">
     <div id="artwrap"><div class="art" id="art"><div class="orb"></div><div class="art-label" id="artLabel"></div></div></div>
     <div id="lyr" class="lyx plain al-l"></div>
    </div>
+
    <div class="panel glass">
     <div class="meta">
      <div><h1 id="title"></h1><p id="artist"></p></div>
@@ -47,19 +54,44 @@ window.onerror=function(m,s,l){
     <div class="seek" id="seek"><div class="track"><div class="fill" id="fill"></div><div class="hit"></div></div></div>
     <div class="times"><span id="cur">0:00</span><button type="button" class="fmt press" id="fmtb" aria-label="Audio format"></button><span id="rem">-0:00</span></div>
     <div class="controls">
-     <button type="button" class="mini press" id="shuf" aria-label="Shuffle"><svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
-     <button type="button" class="cbtn press" id="prev" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9.5 12z"/></svg></button>
-     <button type="button" class="cbtn big press" id="play" aria-label="Play or pause"><svg class="pl" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><svg class="pa" viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></button>
-     <button type="button" class="cbtn press" id="next" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5l10.5 7L4 19z"/></svg></button>
-     <button type="button" class="mini press" id="rep" aria-label="Repeat"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3"/></svg></button>
+      <button type="button" class="mini press" id="shuf" aria-label="Shuffle">
+        <svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+      </button>
+
+      <button type="button" class="cbtn press" id="prev" aria-label="Previous">
+        <svg viewBox="0 0 24 24">
+          <path d="M11.6 6.4L4.4 11.2c-.6.4-.6 1.2 0 1.6l7.2 4.8c.7.5 1.4 0 1.4-.8v-3.6l6.6 4.4c.7.5 1.4 0 1.4-.8V7.2c0-.8-.7-1.3-1.4-.8L13 10.8V7.2c0-.8-.7-1.3-1.4-.8z"/>
+        </svg>
+      </button>
+
+      <button type="button" class="cbtn big press" id="play" aria-label="Play or Pause">
+        <svg class="pl" viewBox="0 0 24 24">
+          <path d="M7.5 5.2c0-.9 1-1.4 1.7-.9l10.2 6.8c.7.4.7 1.4 0 1.8L9.2 19.7c-.7.5-1.7 0-1.7-.9V5.2z"/>
+        </svg>
+        <svg class="pa" viewBox="0 0 24 24">
+          <rect x="6" y="4.5" width="4.4" height="15" rx="1.6"/>
+          <rect x="13.6" y="4.5" width="4.4" height="15" rx="1.6"/>
+        </svg>
+      </button>
+
+      <button type="button" class="cbtn press" id="next" aria-label="Next">
+        <svg viewBox="0 0 24 24">
+          <path d="M12.4 6.4l7.2 4.8c.6.4.6 1.2 0 1.6l-7.2 4.8c-.7.5-1.4 0-1.4-.8v-3.6l-6.6 4.4c-.7.5-1.4 0-1.4-.8V7.2c0-.8.7-1.3 1.4-.8L11 10.8V7.2c0-.8.7-1.3 1.4-.8z"/>
+        </svg>
+      </button>
+
+      <button type="button" class="mini press" id="rep" data-one="0" aria-label="Repeat">
+        <svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+      </button>
     </div>
+
     <div class="vol">
      <svg class="vi" viewBox="0 0 24 24"><path class="sp" d="M4 9.5v5h3.5l4.5 3.5V6L7.5 9.5H4z"/></svg>
      <div class="vs" id="vs"><div class="vt"><div class="vf" id="vf"></div></div></div>
      <svg class="vi" viewBox="0 0 24 24"><path class="sp" d="M3 9.5v5h3.5L11 18V6L6.5 9.5H3z"/><path class="w" d="M14.5 9a4.2 4.2 0 010 6M17.5 6.2a8 8 0 010 11.6"/></svg>
     </div>
    </div>
-  </section>
+   </section>
 
   <section class="view" id="v-browse"><div class="page">
    <div class="lh"><h2 class="big">Browse</h2><div class="hr"><button type="button" class="hbtn press gbtn" data-gear="1" aria-label="Settings"></button></div></div>
@@ -117,6 +149,13 @@ window.onerror=function(m,s,l){
     <div class="sbt"><span>Off</span><span>+6 dB</span><span>+12 dB</span></div>
    </div>
    <p class="sub">Makes quiet songs louder, like a volume booster. A limiter catches the peaks so loud parts do not crackle.</p>
+   <p class="sub">Bass warmth</p>
+   <div class="sbx glass">
+    <div class="sbr"><span>Warmth</span><b id="wrmV">50%</b></div>
+    <div class="vs bst" id="wrm"><div class="vt"><div class="vf" id="wrmf"></div></div></div>
+    <div class="sbt"><span>Off</span><span>50%</span><span>Max</span></div>
+   </div>
+   <p class="sub">Brings the bass up and makes it warmer and fuller, even on small phone speakers, without making the song quieter.</p>
    <div class="srow glass" style="cursor:default"><div class="st"><b>Loud mode</b><span>Evens out the song and lifts the quiet parts</span></div><div class="sw" id="loudSw" role="switch" aria-label="Loud mode"><i></i></div></div>
    <div class="srow glass" style="cursor:default"><div class="st"><b>Equalizer headroom</b><span>On lowers the volume a little when you boost bands. Off keeps songs loud.</span></div><div class="sw" id="protSw" role="switch" aria-label="Equalizer headroom"><i></i></div></div>
    <p class="sub" id="sndNote"></p>
@@ -143,6 +182,7 @@ window.onerror=function(m,s,l){
   </div></section>
  </div>
 
+ <div class="dock" id="dock">
  <div class="mp glass" id="mp">
   <div class="thumb" id="mpThumb"></div>
   <div class="tx"><b id="mpT"></b><span class="a" id="mpA"></span></div>
@@ -157,6 +197,7 @@ window.onerror=function(m,s,l){
   <button type="button" class="tab press" data-v="lib"><svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>Library</button>
   <button type="button" class="tab press" data-v="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>Search</button>
  </nav>
+</div>
 </div>
 
 <div class="sheet" id="sheet"><div class="scrim" id="scrim"></div>
