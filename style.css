@@ -467,3 +467,14 @@ html.look-white .grab span{background:rgba(0,0,0,.14);border-color:rgba(0,0,0,.1
 .bottomrow .circ{width:52px;height:52px;margin:0;border:0;background:none;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
 .bottomrow .circ svg{width:32px;height:32px}
 html.look-white .bottomrow .circ{background:none}
+
+
+/* Refined player transitions: restrained scale, no overshoot or abrupt layout snap. */
+#artwrap{transition:transform .38s cubic-bezier(.22,.75,.22,1);will-change:transform}
+#art{backface-visibility:hidden;transform:translateZ(0)}
+#mpThumb{backface-visibility:hidden;transform:translateZ(0)}
+.busy #artwrap,.busy #mpThumb{transition:none!important}
+@media(prefers-reduced-motion:reduce){
+  #artwrap{transition:none!important}
+  .busy *{animation:none!important}
+}
