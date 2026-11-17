@@ -384,7 +384,7 @@ function load(i){
   paint();
 }
 function setPlaying(p){
-  if(p)audioStart();
+  if(p&&gNeeded())audioStart(); /* only route through the audio engine when an effect needs it */
   if(p&&ac&&ac.state==='suspended'){try{ac.resume();}catch(e){}}
   playing=p;
   app.className=appCls();
@@ -1552,7 +1552,9 @@ function rowHit(e,c,after){
 
 /* ===== MINI PLAYER → NOW PLAYING: the cover flies up into place ===== */
 var expanding=false;
+var backView='now';
 function expandMini(){
+  document.documentElement.classList.add('busy');setTimeout(function(){document.documentElement.classList.remove('busy');},1100);
   if(expanding)return;
   var k=tracks[idx],thumb=$('mpThumb'),art=$('art'),wrap=$('artwrap');
   var from=thumb.getBoundingClientRect();
@@ -1562,6 +1564,7 @@ function expandMini(){
   var artBg=getComputedStyle(art).backgroundImage;
   var shadowCss='0 24px 50px -12px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.12) inset';
 
+  backView=view;
   nowOpen=true;
   go('now');
   var to=wrap.getBoundingClientRect();
@@ -1820,24 +1823,34 @@ function collapseNow(name){
 
 /* ===== NOW PLAYING → MINI PLAYER: the expand animation in reverse ===== */
 var collapsing=false;
-function collapseNow(name){
-  if(collapsing||expanding)return;
+function collapseNow(name,scrub){
+  if(name==='back')name=backView||'now';
+  if(collapsing||expanding)return null;
   var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var appEl=$('app'),art=$('art'),wrap=$('artwrap'),thumb=$('mpThumb'),mpEl=$('mp');
   var from=wrap.getBoundingClientRect();
-  if(view!=='now'||(name==='now'&&!nowOpen)||reduce||!from.width||!wrap.animate){nowOpen=false;go(name);return;}
+  if(view!=='now'||(name==='now'&&!nowOpen)||reduce||!from.width||!wrap.animate){
+    if(scrub)return null;
+    nowOpen=false;go(name);return null;
+  }
 
   /* find where the mini player cover will be, without showing it */
   var cls=appEl.className;
   appEl.className=cls.replace('on-now','');
   var to=thumb.getBoundingClientRect();
   appEl.className=cls;
-  if(!to.width){go(name);return;}
+  if(!to.width){if(scrub)return null;go(name);return null;}
 
   collapsing=true;
+  document.documentElement.classList.add('busy');
+  /* the remembered page appears behind the closing cover, not after it */
+  var tgt=name!=='now'?$('v-'+name):null;
+  if(tgt)tgt.className='view show';
+  $('v-now').style.zIndex='50';
   var k=tracks[idx];
-  var EO='cubic-bezier(.32,.72,0,1)',EI='cubic-bezier(.5,0,.75,.4)';
+  var EO='cubic-bezier(.16,1,.3,1)',EI='cubic-bezier(.4,0,.8,.5)';
   var shadowCss=getComputedStyle(art).boxShadow;
+  var list=[],i,j;
 
   /* controls and glass panel drop away */
   var outs=[];
@@ -1846,11 +1859,12 @@ function collapseNow(name){
   if(ctl)outs.push(ctl.animate([
     {opacity:1,transform:'translateY(0) scale(1)'},
     {opacity:0,transform:'translateY(28px) scale(.97)'}
-  ],{duration:340,easing:EI,fill:'forwards'}));
+  ],{duration:460,easing:EI,fill:'forwards'}));
   if(pnl)outs.push(pnl.animate([
     {opacity:1,transform:'translateY(0) scaleX(1) scaleY(1)',transformOrigin:'50% 100%'},
     {opacity:0,transform:'translateY(40px) scaleX(.9) scaleY(.82)',transformOrigin:'50% 100%'}
-  ],{duration:380,delay:30,easing:EI,fill:'forwards'}));
+  ],{duration:520,delay:30,easing:EI,fill:'forwards'}));
+  list=list.concat(outs);
 
   /* flying copy of the cover */
   var g=document.createElement('div');
@@ -1880,6 +1894,7 @@ function collapseNow(name){
   function cleanup(){
     if(fin)return;
     fin=true;
+    document.documentElement.classList.remove('busy');
     thumb.style.visibility='';
     art.style.visibility='';
     requestAnimationFrame(function(){requestAnimationFrame(function(){
@@ -1889,29 +1904,81 @@ function collapseNow(name){
   }
 
   /* the cover starts moving right away, a moment after the controls */
-  var tx=to.left-from.left,ty=to.top-from.top,sc=to.width/from.width,D=700,W=90;
+  var tx=to.left-from.left,ty=to.top-from.top,sc=to.width/from.width,D=1000,W=110,T=D+W;
   var mv=g.animate([
     {transform:'translate3d(0,0,0) scale(1)'},
     {transform:'translate3d('+tx+'px,'+ty+'px,0) scale('+sc+')'}
   ],{duration:D,delay:W,easing:EO,fill:'both'});
-  gl.animate([{opacity:1},{opacity:0}],{duration:D,delay:W,fill:'both'});
-  if(fade)fade.animate([{opacity:1,offset:0},{opacity:1,offset:.6},{opacity:0,offset:1}],{duration:D,delay:W,fill:'both'});
-  mv.onfinish=cleanup;
-  mv.oncancel=cleanup;
-  setTimeout(cleanup,D+W+400);
+  list.push(mv);
+  list.push(gl.animate([{opacity:1},{opacity:0}],{duration:D,delay:W,fill:'both'}));
+  if(fade)list.push(fade.animate([{opacity:1,offset:0},{opacity:1,offset:.6},{opacity:0,offset:1}],{duration:D,delay:W,fill:'both'}));
 
   /* switch the page quietly while the cover is already in flight */
-  setTimeout(function(){
+  var switched=false;
+  function switchPage(){
+    if(switched)return;
+    switched=true;
     nowOpen=false;
     go(name);
-    var i;
-    for(i=0;i<outs.length;i++){try{outs[i].cancel();}catch(e){}}
+    $('v-now').style.zIndex='';
+    for(i=0;i<outs.length;i++){try{outs[i].cancel();}catch(err){}}
     if(!fin)thumb.style.visibility='hidden';
+    var dock=document.getElementById('dock');
+    if(dock&&dock.animate)dock.animate([{transform:'translateY(100%)'},{transform:'translateY(0)'}],{duration:620,easing:EO,fill:'backwards'});
     if(mpEl&&mpEl.animate)mpEl.animate([
       {opacity:0,transform:'translateY(16px)'},
       {opacity:1,transform:'translateY(0)'}
     ],{duration:420,easing:EO,fill:'backwards'});
-  },400);
+  }
+
+  /* normal tap: play it all automatically */
+  if(!scrub){
+    mv.onfinish=cleanup;
+    mv.oncancel=cleanup;
+    setTimeout(cleanup,T+400);
+    setTimeout(switchPage,560);
+    return null;
+  }
+
+  /* drag: every piece is held at the position the finger has reached */
+  for(j=0;j<list.length;j++){list[j].pause();list[j].currentTime=0;}
+  var api={p:0};
+  api.set=function(v){
+    var p=Math.max(0,Math.min(1,v)),t=p*T;
+    api.p=p;
+    for(var q=0;q<list.length;q++)list[q].currentTime=t;
+  };
+  api.commit=function(){
+    var rest=Math.max(0,(1-api.p)*T);
+    for(var q=0;q<list.length;q++){list[q].playbackRate=1;list[q].play();}
+    mv.onfinish=cleanup;
+    mv.oncancel=cleanup;
+    setTimeout(cleanup,rest+400);
+    setTimeout(switchPage,Math.max(0,560-api.p*T));
+  };
+  api.cancel=function(){
+    var restored=false;
+    function restore(){
+      if(restored)return;
+      restored=true;
+      document.documentElement.classList.remove('busy');
+      for(var q=0;q<list.length;q++){try{list[q].cancel();}catch(err){}}
+      art.style.visibility='';
+      $('v-now').style.zIndex='';
+      if(tgt&&view!==name)tgt.className='view';
+      if(g.parentNode)g.parentNode.removeChild(g);
+      collapsing=false;
+    }
+    if(api.p<=0){restore();return;}
+    mv.onfinish=restore;
+    mv.oncancel=restore;
+    setTimeout(restore,api.p*T+200);
+    for(var q=0;q<list.length;q++){
+      list[q].playbackRate=-1;
+      list[q].play();
+    }
+  };
+  return api;
 }
 /* =====================================================================
    WIRING
@@ -1926,6 +1993,7 @@ on('mpPlay','click',function(e){e.stopPropagation();setPlaying(!playing);});
 on('mpNext','click',function(e){e.stopPropagation();next(false);});
 on('mp','click',expandMini);
 on('qBtn','click',openQ);
+on('qlBtn','click',openQ);
 on('scrim','click',closeQ);
 on('clearQ','click',function(){
   var i,k;
@@ -1951,6 +2019,13 @@ on('lbtn','click',function(){
 ['touchstart','wheel','mousedown'].forEach(function(ev){
   on('lyr',ev,function(){lyUser=performance.now();lyVel=0;});
 });
+/* keep the user's manual scroll in control while the finger moves (and briefly after it lifts) */
+var lyFinger=false;
+on('lyr','touchstart',function(){lyFinger=true;lyUser=performance.now();});
+on('lyr','touchmove',function(){lyUser=performance.now();});
+on('lyr','touchend',function(){lyFinger=false;lyUser=performance.now();});
+on('lyr','touchcancel',function(){lyFinger=false;lyUser=performance.now();});
+on('lyr','scroll',function(){if(lyFinger)lyUser=performance.now();});
 
 on('lyr','click',function(e){
   if(wasOff&&Date.now()-wasOffT<500){wasOff=false;return;}
@@ -2322,4 +2397,60 @@ function restoreSongs(){
   });
 }
 restoreSongs();
+
+/* SMOOTH SCROLLING: flag the page while something scrolls (blur is paused during the scroll) */
+(function(){
+  var t=null, root=document.documentElement;
+  document.addEventListener('scroll',function(){
+    if(!root.classList.contains('scrolling'))root.classList.add('scrolling');
+    clearTimeout(t);
+    t=setTimeout(function(){root.classList.remove('scrolling');},160);
+  },{capture:true,passive:true});
+})();
+
+/* FULL PLAYER: the grab pill follows the finger in real time.
+   On release: a fast downward flick closes the player; a fast upward flick keeps it open;
+   a slow drag closes only past 40% of the way. */
+(function(){
+  var grab=document.getElementById('grab');
+  if(!grab)return;
+  var drag=null,startY=0,pill=grab.querySelector('span'),samples=[];
+  var FLICK=0.6; /* px per millisecond */
+  grab.addEventListener('pointerdown',function(e){
+    if(!nowOpen||view!=='now'||expanding||collapsing)return;
+    try{grab.setPointerCapture(e.pointerId);}catch(_){}
+    startY=e.clientY;
+    samples=[{y:e.clientY,t:performance.now()}];
+    drag=collapseNow('back',true);
+  });
+  grab.addEventListener('pointermove',function(e){
+    if(!drag)return;
+    var now=performance.now();
+    samples.push({y:e.clientY,t:now});
+    while(samples.length>2&&now-samples[0].t>120)samples.shift();
+    var dy=e.clientY-startY;
+    drag.set(dy/(window.innerHeight*0.6));
+    pill.style.transform='translateY('+Math.max(0,Math.min(120,dy))+'px)';
+  });
+  function velocity(){
+    if(samples.length<2)return 0;
+    var a=samples[0],b=samples[samples.length-1];
+    var dt=b.t-a.t;
+    if(dt<=0||performance.now()-b.t>150)return 0; /* finger had stopped before lifting */
+    return (b.y-a.y)/dt;
+  }
+  function release(){
+    if(!drag)return;
+    var d=drag;drag=null;
+    var v=velocity();
+    var close;
+    if(v>=FLICK)close=true;           /* fast flick down: close fully */
+    else if(v<=-FLICK)close=false;    /* fast flick up: stay open */
+    else close=d.p>=0.4;              /* slow drag: 40% rule */
+    pill.style.transition='transform .3s cubic-bezier(.2,.8,.2,1)';pill.style.transform='';
+    if(close)d.commit();else d.cancel();
+  }
+  grab.addEventListener('pointerup',release);
+  grab.addEventListener('pointercancel',release);
+})();
 })();

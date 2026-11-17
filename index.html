@@ -27,6 +27,7 @@ window.onerror=function(m,s,l){
    <header class="glass">
     <button type="button" class="hbtn press" id="qBtn" aria-label="Queue"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Queue</button>
     <div class="htitle"><b>Now Playing</b><span id="queueName">Demo queue · 4 songs</span></div>
+    <div class="grab" id="grab" aria-label="Drag down to close"><span></span></div>
     <div class="hr">
      <label class="hbtn press" for="files">Add</label>
      <button type="button" class="hbtn press gbtn" data-gear="1" aria-label="Settings"></button>
@@ -48,8 +49,7 @@ window.onerror=function(m,s,l){
    <div class="panel glass">
     <div class="meta">
      <div><h1 id="title"></h1><p id="artist"></p></div>
-     <button type="button" class="circ press dis qico" id="lbtn" aria-label="Lyrics"></button>
-     <button type="button" class="circ press" id="heart" aria-label="Favourite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.6-9-9.4C2 7.8 4 5 7 5c1.9 0 3.5 1 5 3 1.5-2 3.1-3 5-3 3 0 5 2.8 4 6.1-1.5 4.8-9 9.4-9 9.4z"/></svg></button>
+          <button type="button" class="circ press" id="heart" aria-label="Favourite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.6-9-9.4C2 7.8 4 5 7 5c1.9 0 3.5 1 5 3 1.5-2 3.1-3 5-3 3 0 5 2.8 4 6.1-1.5 4.8-9 9.4-9 9.4z"/></svg></button>
     </div>
     <div class="seek" id="seek"><div class="track"><div class="fill" id="fill"></div><div class="hit"></div></div></div>
     <div class="times"><span id="cur">0:00</span><button type="button" class="fmt press" id="fmtb" aria-label="Audio format"></button><span id="rem">-0:00</span></div>
@@ -90,7 +90,9 @@ window.onerror=function(m,s,l){
      <div class="vs" id="vs"><div class="vt"><div class="vf" id="vf"></div></div></div>
      <svg class="vi" viewBox="0 0 24 24"><path class="sp" d="M3 9.5v5h3.5L11 18V6L6.5 9.5H3z"/><path class="w" d="M14.5 9a4.2 4.2 0 010 6M17.5 6.2a8 8 0 010 11.6"/></svg>
     </div>
+
    </div>
+    <div class="bottomrow"><button type="button" class="circ press dis qico" id="lbtn" aria-label="Lyrics"></button><button type="button" class="circ press" id="qlBtn" aria-label="Up next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button></div>
    </section>
 
   <section class="view" id="v-browse"><div class="page">
